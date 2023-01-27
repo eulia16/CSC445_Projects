@@ -1,0 +1,15 @@
+This is a place to keep notes
+
+There are several part of this project and some can't/are annoying to implement rn, such as
+setting up a machine on a different network and creating a server to send acknowledgements back
+and accept some random data(we'll use my pi but lets just use the school servers for now)
+
+date: 26-1-23
+for now we will focus on the bare bones and set up some sort of communication with the school servers 
+
+
+
+
+
+
+
