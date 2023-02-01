@@ -1,7 +1,8 @@
+package Example_Projects;
 import java.net.*;
 import java.io.*;
 
-public class Server {
+public class Server_Example_TCP {
   static final int PORT = 5325;
   public static void main(String[] args) {
     try {

@@ -1,4 +1,4 @@
-package Project_1;
+//package Project_1;
 
 import java.net.*;
 import java.io.*;
@@ -7,7 +7,7 @@ import java.io.*;
 //will communicate with, and then I will attempt to use my raspberry pi as a server and have it attached to a seperate
 //network, such as colloseum or something of that nature. We can ask Professor Lea at a later date to see if that 
 //suffices or if he has any alternative recommendations. 
-public class Client{
+public class Client_Example_TCP{
      public static void main(String[] args) {
           String host = "pi.cs.oswego.edu";
           int echoServicePortNumber = 5325;
