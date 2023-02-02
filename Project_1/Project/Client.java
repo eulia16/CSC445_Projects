@@ -13,7 +13,7 @@ public class Client {
      static String HOST = "pi.cs.oswego.edu";
 
 
-     public static void main(String[] argz) throws IOException, UnknownHostException{
+     public static void main(String[] argz) throws IOException, UnknownHostException, InterruptedException{
          //ensure 2 command line arguments were passed into the program
 
          //error checking
@@ -52,8 +52,15 @@ public class Client {
               //next steps are calling nanotime, sending bytes to server, wait for the bytes to be returned
               //(having the server 'echo' the bytes back(decode using XOR, validate message)), 
               //end nanotime, calculate total RTT it took, then emulate using UDP;
+              //grab curreny system time
+              long startTime = System.nanoTime();
 
-             
+              Thread.sleep(1000);
+              long timeTaken = (System.nanoTime() - startTime);
+              double seconds = timeTaken / 1_000_000_000.0;
+
+              System.out.println("seconds: " + seconds);
+              
           
             }
          //if UDP
