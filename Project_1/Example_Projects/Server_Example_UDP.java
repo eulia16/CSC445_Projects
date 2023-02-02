@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 
 public class Server_Example_UDP  extends Thread {
      
@@ -9,7 +10,7 @@ public class Server_Example_UDP  extends Thread {
      private boolean running;
      private byte[] buf = new byte[256];
  
-     public Server_Example_UDP() {
+     public Server_Example_UDP() throws SocketException {
          socket = new DatagramSocket(4445);
      }
  
