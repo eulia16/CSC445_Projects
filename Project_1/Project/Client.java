@@ -13,7 +13,7 @@ public class Client {
      static String HOST = "pi.cs.oswego.edu";
 
 
-     public static void main(String[] argz){
+     public static void main(String[] argz) throws IOException, UnknownHostException{
          //ensure 2 command line arguments were passed into the program
 
          //error checking
@@ -37,22 +37,22 @@ public class Client {
              //call TCP functions
              System.out.println("this is TCP");
              //establish connection
-             try{
-             Socket clientConnection = Establish_TCP_Connection();
-             PrintWriter sendMessage = new PrintWriter(clientConnection.getOutputStream(), true);;
-             BufferedReader readMessage = new BufferedReader(new InputStreamReader(clientConnection.getInputStream()));;
              
-          }
-            catch (UnknownHostException e) {
-                System.err.println("Don't know about host " + HOST);
-                e.printStackTrace();
-                System.exit(1);
-         }  catch (IOException e) {
-                System.err.println("Couldn't get I/O for the connection.");
-                e.printStackTrace();
-                System.exit(1);
-        }
+             //wait to uncomment until the server exists so you can establish some sort of connection
+             //Socket clientConnection = Establish_TCP_Connection();
+             //PrintWriter sendMessage = new PrintWriter(clientConnection.getOutputStream(), true);;
+             //BufferedReader readMessage = new BufferedReader(new InputStreamReader(clientConnection.getInputStream()));
 
+             Byte[] message = getByteSizeInput();
+             for(byte b: message){
+               System.out.println("byte: " + b);
+              }
+              
+
+             
+              
+             
+          
          }
          //if UDP
          else{
@@ -60,6 +60,30 @@ public class Client {
          }
 
 
+     }
+
+     public static Byte[] getByteSizeInput() throws IOException{
+         
+               //way to read input from user
+               BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+               System.out.println("Enter the size of the message you want to send.(8, 32, 512, and 1024)");
+               //get desired message size
+               int size = userInput.read();
+               Byte[] message = new Byte[size];
+               //create value for each Byte
+               for(int i=0; i < message.length; ++i){
+                message[i] = 1;
+               }
+               
+               message = XOR_Byte(message);
+               int counter=0;
+
+               for(byte b: message){
+                System.out.println("byte: " + b);
+                System.out.println(counter++);
+            }
+            return message;
+     
      }
      
      public static Socket Establish_TCP_Connection() throws UnknownHostException, IOException{
@@ -70,6 +94,15 @@ public class Client {
      //encryption method
      public static long XOR(long x){
           return x ^ 1L;
+     }
+
+     //encryption method
+     public static Byte[] XOR_Byte(Byte[] bytes){
+          //xor every byte w/ 1
+          for(int i=0; i<bytes.length; ++i){
+               bytes[i] = (byte) (bytes[i] ^ 1);
+          }
+          return bytes;
      }
 
 }
