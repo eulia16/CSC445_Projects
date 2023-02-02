@@ -1,5 +1,9 @@
-import java.net.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class Server_Example_TCP {
   static final int PORT = 5325;
@@ -33,6 +37,7 @@ public class Server_Example_TCP {
         out.close();
         in.close();
         client.close();
+        serverSocket.close();
       }
     }
     catch (IOException ex) {
