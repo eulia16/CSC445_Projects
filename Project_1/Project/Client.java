@@ -44,16 +44,18 @@ public class Client {
              //BufferedReader readMessage = new BufferedReader(new InputStreamReader(clientConnection.getInputStream()));
 
              Byte[] message = getByteSizeInput();
+             //error checking
              for(byte b: message){
                System.out.println("byte: " + b);
               }
-              
+
+              //next steps are calling nanotime, sending bytes to server, wait for the bytes to be returned
+              //(having the server 'echo' the bytes back(decode using XOR, validate message)), 
+              //end nanotime, calculate total RTT it took, then emulate using UDP;
 
              
-              
-             
           
-         }
+            }
          //if UDP
          else{
              //call UDP functions
