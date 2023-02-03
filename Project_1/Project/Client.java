@@ -45,15 +45,16 @@ public class Client {
              //PrintWriter sendMessage = new PrintWriter(clientConnection.getOutputStream(), true);;
              //BufferedReader readMessage = new BufferedReader(new InputStreamReader(clientConnection.getInputStream()));
              DataOutputStream sendMessage = new DataOutputStream(clientConnection.getOutputStream());
-             DataInputStream receiveMessage = new DataInputStream(clientConnection.getInputStream());
+             BufferedReader receiveMessage = new BufferedReader (new InputStreamReader(clientConnection.getInputStream()));
              
 
-
-             Byte[] message = getByteSizeInput();
+             //we may keep this later, idk yet?
+             //byte[] message = getByteSizeInput();
+             String message = new String("this is a message to be sent to the server")
              //error checking
-             for(byte b: message){
-               System.out.println("byte: " + b);
-              }
+             //for(byte b: message){
+             //  System.out.println("byte: " + b);
+             // }
 
               //next steps are calling nanotime, sending bytes to server, wait for the bytes to be returned
               //(having the server 'echo' the bytes back(decode using XOR, validate message)), 
@@ -64,6 +65,7 @@ public class Client {
               Thread.sleep(1000);
              
               //send message to server
+              sendMessage.writeByte(1);
               sendMessage.writeBytes( message.toString());
               
               
@@ -82,14 +84,14 @@ public class Client {
 
      }
 
-     public static Byte[] getByteSizeInput() throws IOException{
+     public static byte[] getByteSizeInput() throws IOException{
          
                //way to read input from user
                BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
                System.out.println("Enter the size of the message you want to send.(8, 32, 512, and 1024)");
                //get desired message size
                int size = userInput.read();
-               Byte[] message = new Byte[size];
+               byte[] message = new byte[size];
                //create value for each Byte
                for(int i=0; i < message.length; ++i){
                 message[i] = 1;
@@ -117,7 +119,7 @@ public class Client {
      }
 
      //encryption method
-     public static Byte[] XOR_Byte(Byte[] bytes){
+     public static byte[] XOR_Byte(byte[] bytes){
           //xor every byte w/ 1
           for(int i=0; i<bytes.length; ++i){
                bytes[i] = (byte) (bytes[i] ^ 1);
