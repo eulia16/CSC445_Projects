@@ -1,4 +1,6 @@
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -39,9 +41,13 @@ public class Client {
              //establish connection
              
              //wait to uncomment until the server exists so you can establish some sort of connection
-             //Socket clientConnection = Establish_TCP_Connection();
+             Socket clientConnection = Establish_TCP_Connection();
              //PrintWriter sendMessage = new PrintWriter(clientConnection.getOutputStream(), true);;
              //BufferedReader readMessage = new BufferedReader(new InputStreamReader(clientConnection.getInputStream()));
+             DataOutputStream sendMessage = new DataOutputStream(clientConnection.getOutputStream());
+             DataInputStream receiveMessage = new DataInputStream(clientConnection.getInputStream());
+             
+
 
              Byte[] message = getByteSizeInput();
              //error checking
@@ -56,6 +62,11 @@ public class Client {
               long startTime = System.nanoTime();
 
               Thread.sleep(1000);
+             
+              //send message to server
+              sendMessage.writeBytes( message.toString());
+              
+              
               long timeTaken = (System.nanoTime() - startTime);
               double seconds = timeTaken / 1_000_000_000.0;
 
