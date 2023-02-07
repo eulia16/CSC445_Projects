@@ -14,7 +14,3 @@ the server will close all of its open sockets, streamreaders, etc.
 --left off changing the code to send one byte to the server before the actual message, 
 partially changed the client code but not the server yet, i had to stop and get a calzone
 before i make any more changes(1-2-23)
-
-
-we have chosen to send a single bit(1 or 0) to define whether the socket should close or not on the server side
-then after that bit it sent, move on from there

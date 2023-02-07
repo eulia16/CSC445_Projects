@@ -1,11 +1,11 @@
-import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.io.BufferedReader;
+import java.util.Scanner;
 
 
 //this class will accept 2 commmand line arguments, one to define whether to use TCP or UDP, and the other to
@@ -16,66 +16,77 @@ public class Client {
 
 
      public static void main(String[] argz) throws IOException, UnknownHostException, InterruptedException{
+
+          Client(argz);
+     }
+
+     public static void Client(String[] argz) throws IOException, InterruptedException {
          //ensure 2 command line arguments were passed into the program
 
          //error checking
          if(argz.length != 2){
-          System.out.println("You need to enter the data connection model and what to measure.");
-          System.exit(0);
+             System.out.println("You need to enter the data connection model and what to measure.");
+             System.exit(0);
          }
          System.out.println("arg1: " + argz[0] + ", arg2: " + argz[1]);
 
          //fix this later idk whats wrong w it
-         if( !(argz[0].equalsIgnoreCase("TCP")) || !(argz[0].equalsIgnoreCase("UDP")) || 
-         !(argz[1].equalsIgnoreCase("RTT")) || !(argz[1].equalsIgnoreCase("Throughput"))){
-          System.out.println("You must enter a valid protocol" +
-          "(either TCP or TCP) and a valid measurement system(RTT or Throughput)");
+//         if( (!(argz[0].equalsIgnoreCase("-TCP"))) || (!(argz[0].equalsIgnoreCase("-UDP"))) &&
+//                 ((argz[1].equalsIgnoreCase("-RTT"))) || ((argz[1].equalsIgnoreCase("-Throughput")))){
+         if( ((argz[0].compareToIgnoreCase("-TCP") != 0)) && ((argz[0].compareToIgnoreCase("-UDP") != 0)) ||
+                 (argz[1].compareToIgnoreCase("-RTT") !=0) &&  ((argz[1].compareToIgnoreCase("-Throughput") !=0))){
+             System.out.println("You must enter a valid protocol" +
+                     "(either TCP or TCP) and a valid measurement system(RTT or Throughput)");
          }
+
          long x = 4;
          long y = XOR(x);
          System.out.println("xor: " + y + ", second xor: " + XOR(y));
          //if TCP
-         if(argz[0].equals("TCP")){
+         if(argz[0].compareToIgnoreCase("-TCP") == 0){
              //call TCP functions
              System.out.println("this is TCP");
              //establish connection
-             
+
              //wait to uncomment until the server exists so you can establish some sort of connection
              Socket clientConnection = Establish_TCP_Connection();
              //PrintWriter sendMessage = new PrintWriter(clientConnection.getOutputStream(), true);;
              //BufferedReader readMessage = new BufferedReader(new InputStreamReader(clientConnection.getInputStream()));
              DataOutputStream sendMessage = new DataOutputStream(clientConnection.getOutputStream());
-             BufferedReader receiveMessage = new BufferedReader (new InputStreamReader(clientConnection.getInputStream()));
-             
+             DataInputStream recieveMessage = new DataInputStream(clientConnection.getInputStream());
 
-             //we may keep this later, idk yet?
-             //byte[] message = getByteSizeInput();
-             String message = new String("this is a message to be sent to the server")
-             //error checking
-             //for(byte b: message){
-             //  System.out.println("byte: " + b);
-             // }
 
-              //next steps are calling nanotime, sending bytes to server, wait for the bytes to be returned
-              //(having the server 'echo' the bytes back(decode using XOR, validate message)), 
-              //end nanotime, calculate total RTT it took, then emulate using UDP;
-              //grab curreny system time
-              long startTime = System.nanoTime();
+             //next steps are calling nanotime, sending bytes to server, wait for the bytes to be returned
+             //(having the server 'echo' the bytes back(decode using XOR, validate message)),
+             //end nanotime, calculate total RTT it took, then emulate using UDP;
 
-              Thread.sleep(1000);
-             
-              //send message to server
-              sendMessage.writeByte(1);
-              sendMessage.writeBytes( message.toString());
-              
-              
-              long timeTaken = (System.nanoTime() - startTime);
-              double seconds = timeTaken / 1_000_000_000.0;
+             Scanner kbd = new Scanner(System.in);
+             System.out.println("Enter 1 if you want to keep talking with the server, or 0 if you want to leave");
+             //get desired message size
+             int size = kbd.nextInt();
+             System.out.println("size: " + size);
 
-              System.out.println("seconds: " + seconds);
-              
-          
-            }
+             //grab current system time
+             long startTime = System.nanoTime();
+
+             //sleep for 1 second just for shits and gigs
+             Thread.sleep(1000);
+
+             //send message to server
+             sendMessage.writeInt(size);// writeByte(size);
+             //sendMessage.writeBytes(message.toString());
+
+             System.out.println(recieveMessage.readUTF());
+
+
+             //calculates time taken
+             long timeTaken = (System.nanoTime() - startTime);
+             double seconds = timeTaken / 1_000_000_000.0;
+
+             System.out.println("seconds: " + seconds);
+
+
+         }
          //if UDP
          else{
              //call UDP functions
