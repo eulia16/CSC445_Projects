@@ -38,8 +38,19 @@ public class Server {
 
                     switch(signalBit) {
                         case 1:
+                            //confirm revieved bit
                             System.out.println("the signal bit was 1, continue to perform operations: " + signalBit);
+                            //send confirmation message
                             sendMessage.writeUTF("We recieved your message, thank you.");
+                            //sendMessage.flush();
+                            byte[] recievedBytes = receiveMessage.readAllBytes();
+                            for(byte i : recievedBytes){
+                                System.out.println(i);
+                            }
+                            if(validatedBytes(recievedBytes)) {
+                                sendMessage.write(recievedBytes);
+                                System.out.println("Writing bytes to client.");
+                            }
                             break;
 
                         case 0:
@@ -52,30 +63,7 @@ public class Server {
                             throw new IllegalStateException("Unexpected value: " + signalBit);
                     }
 
-
-
-
-
-//                    System.out.println("undecoded message");
-//                    for(int i=0; i<bytes.length; ++i){
-//                        System.out.print(bytes[i] + "\n" + i);
-//                    }
-
-
-
-                    //bytes = decodeBytes(bytes);
-
-//                    System.out.println("decoded message");
-//                    for(int i=0; i< bytes.length; ++i){
-//                        System.out.println(bytes[i] + "\n" + i);
-//                    }
-
-                    //if(client.)
-
                 }
-
-                //serverSocket.close();
-
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -88,6 +76,16 @@ public class Server {
 
         }
 
+    }
+
+    //checks to see if every but is 1, if there is a non 1 slot, something was corrupted
+    public static boolean validatedBytes(byte[] message){
+        for(int i =0; i<message.length; ++i ){
+            if(message[i] != 0)
+                return false;
+        }
+
+        return true;
     }
 
     public static ServerSocket establishSocket() throws IOException{

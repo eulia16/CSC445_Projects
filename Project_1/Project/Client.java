@@ -48,10 +48,9 @@ public class Client {
              System.out.println("this is TCP");
              //establish connection
 
-             //wait to uncomment until the server exists so you can establish some sort of connection
+             //wait to uncomment until the server exists, so you can establish some sort of connection
              Socket clientConnection = Establish_TCP_Connection();
-             //PrintWriter sendMessage = new PrintWriter(clientConnection.getOutputStream(), true);;
-             //BufferedReader readMessage = new BufferedReader(new InputStreamReader(clientConnection.getInputStream()));
+
              DataOutputStream sendMessage = new DataOutputStream(clientConnection.getOutputStream());
              DataInputStream recieveMessage = new DataInputStream(clientConnection.getInputStream());
 
@@ -60,11 +59,25 @@ public class Client {
              //(having the server 'echo' the bytes back(decode using XOR, validate message)),
              //end nanotime, calculate total RTT it took, then emulate using UDP;
 
-             Scanner kbd = new Scanner(System.in);
-             System.out.println("Enter 1 if you want to keep talking with the server, or 0 if you want to leave");
-             //get desired message size
-             int size = kbd.nextInt();
-             System.out.println("size: " + size);
+             //get signal bit
+             int signalBit = getSignalBit();
+             int sizeByte = getByteSize();
+
+
+             //send message to server
+             sendMessage.writeInt(signalBit);// writeByte(size);
+
+             //receive message from server
+             System.out.println(recieveMessage.readUTF());
+
+             //send bytes
+             byte[] bytesToSend = new byte[sizeByte];
+             bytesToSend = giveBytesMeaning(bytesToSend);
+
+             //first we must encode the bytes
+             bytesToSend = XOR_Bytes(bytesToSend);
+
+             //start timer right before sending data
 
              //grab current system time
              long startTime = System.nanoTime();
@@ -72,11 +85,14 @@ public class Client {
              //sleep for 1 second just for shits and gigs
              Thread.sleep(1000);
 
-             //send message to server
-             sendMessage.writeInt(size);// writeByte(size);
-             //sendMessage.writeBytes(message.toString());
+             //write bytes to outputstream
+             sendMessage.write(bytesToSend);
 
-             System.out.println(recieveMessage.readUTF());
+             //for some reason i cant get input back from the server, try to figure it out
+
+             //byte[] recievedByte = recieveMessage.readAllBytes();
+
+             //printBytes(recievedByte);
 
 
              //calculates time taken
@@ -95,34 +111,41 @@ public class Client {
 
      }
 
-     public static byte[] getByteSizeInput() throws IOException{
-         
-               //way to read input from user
-               BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
-               System.out.println("Enter the size of the message you want to send.(8, 32, 512, and 1024)");
-               //get desired message size
-               int size = userInput.read();
-               byte[] message = new byte[size];
-               //create value for each Byte
-               for(int i=0; i < message.length; ++i){
-                message[i] = 1;
-               }
-               
-               message = XOR_Byte(message);
-               int counter=0;
-
-               for(byte b: message){
-                System.out.println("byte: " + b);
-                System.out.println(counter++);
-            }
-            return message;
-     
+     public static void printBytes(byte[] message){
+         for(int i=0; i < message.length; ++i){
+             System.out.println(message[i]);
+         }
      }
-     
+     public static byte[] giveBytesMeaning(byte[] message){
+         for(int i=0; i < message.length; ++i){
+             message[i] = 1;
+         }
+         return message;
+     }
+
+     public static int getSignalBit()throws IOException{
+         Scanner kbd = new Scanner(System.in);
+         System.out.println("Enter 1 if you want to keep talking with the server, or 0 if you want to leave");
+         //get desired message size
+         int size = kbd.nextInt();
+         System.out.println("size: " + size);
+         return size;
+     }
+     public static int getByteSize() throws IOException{
+         Scanner kbd = new Scanner(System.in);
+         System.out.println("Enter the size of the message you want to send.(8, 32, 512, and 1024)");
+         //get desired message size
+         int size = kbd.nextInt();
+         System.out.println("size: " + size);
+         return size;
+     }
+
+
      public static Socket Establish_TCP_Connection() throws UnknownHostException, IOException{
           Socket clientSocket = new Socket(HOST, PORT);
           return clientSocket;
      }
+
 
      //encryption method
      public static long XOR(long x){
@@ -130,12 +153,38 @@ public class Client {
      }
 
      //encryption method
-     public static byte[] XOR_Byte(byte[] bytes){
+     public static byte[] XOR_Bytes(byte[] bytes){
           //xor every byte w/ 1
           for(int i=0; i<bytes.length; ++i){
-               bytes[i] = (byte) (bytes[i] ^ 1);
+               bytes[i] = (byte) (bytes[i] ^ 1l);
           }
           return bytes;
      }
+
+    @Deprecated
+    public static byte[] getByteSizeInput() throws IOException{
+
+        //way to read input from user
+        BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("Enter the size of the message you want to send.(8, 32, 512, and 1024)");
+        //get desired message size
+        int size = userInput.read();
+        byte[] message = new byte[size];
+        //create value for each Byte
+        for(int i=0; i < message.length; ++i){
+            message[i] = 1;
+        }
+
+        //message = XOR_Byte(message);
+        int counter=0;
+
+        for(byte b: message){
+            System.out.println("byte: " + b);
+            System.out.println(counter++);
+        }
+        return message;
+
+    }
+
 
 }
