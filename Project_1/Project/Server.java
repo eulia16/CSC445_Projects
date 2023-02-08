@@ -1,11 +1,10 @@
-import java.io.DataOutputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
+import javax.xml.crypto.Data;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server {
-    final static int PORT = 20000;
+    final static int PORT = 25000;
 
     public static void main(String[] argz){
         System.out.println("This is the server application, it will require one command line argument, whether "
@@ -41,16 +40,19 @@ public class Server {
                             //confirm revieved bit
                             System.out.println("the signal bit was 1, continue to perform operations: " + signalBit);
                             //send confirmation message
-                            sendMessage.writeUTF("We recieved your message, thank you.");
-                            //sendMessage.flush();
-                            byte[] recievedBytes = receiveMessage.readAllBytes();
-                            for(byte i : recievedBytes){
-                                System.out.println(i);
-                            }
-                            if(validatedBytes(recievedBytes)) {
-                                sendMessage.write(recievedBytes);
-                                System.out.println("Writing bytes to client.");
-                            }
+                            sendMessage.writeUTF("We received your message, thank you.");
+                            sendMessage.flush();
+                            String receivedBytes = receiveMessage.readUTF();  //readAllBytes();
+                            //for(byte i : recievedBytes){
+                            System.out.println(receivedBytes);
+                            //}
+
+
+                            //if(validatedBytes(receivedBytes)) {
+                            sendMessage.writeUTF("This is a test response");//write(recievedBytes);
+                            sendMessage.flush();
+                            System.out.println("Message bytes to client.");
+                            //}
                             break;
 
                         case 0:

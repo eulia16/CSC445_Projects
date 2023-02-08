@@ -1,17 +1,14 @@
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.io.BufferedReader;
+import java.sql.SQLOutput;
 import java.util.Scanner;
 
 
 //this class will accept 2 commmand line arguments, one to define whether to use TCP or UDP, and the other to
 //determine whether you would like to measure the RTT(round trip time), or the latency
 public class Client {
-     static final int PORT = 20000;
+     static final int PORT = 25000;
      static String HOST = "pi.cs.oswego.edu";
 
 
@@ -30,29 +27,22 @@ public class Client {
          }
          System.out.println("arg1: " + argz[0] + ", arg2: " + argz[1]);
 
-         //fix this later idk whats wrong w it
-//         if( (!(argz[0].equalsIgnoreCase("-TCP"))) || (!(argz[0].equalsIgnoreCase("-UDP"))) &&
-//                 ((argz[1].equalsIgnoreCase("-RTT"))) || ((argz[1].equalsIgnoreCase("-Throughput")))){
          if( ((argz[0].compareToIgnoreCase("-TCP") != 0)) && ((argz[0].compareToIgnoreCase("-UDP") != 0)) ||
                  (argz[1].compareToIgnoreCase("-RTT") !=0) &&  ((argz[1].compareToIgnoreCase("-Throughput") !=0))){
              System.out.println("You must enter a valid protocol" +
                      "(either TCP or TCP) and a valid measurement system(RTT or Throughput)");
          }
 
-         long x = 4;
-         long y = XOR(x);
-         System.out.println("xor: " + y + ", second xor: " + XOR(y));
          //if TCP
          if(argz[0].compareToIgnoreCase("-TCP") == 0){
              //call TCP functions
              System.out.println("this is TCP");
              //establish connection
-
-             //wait to uncomment until the server exists, so you can establish some sort of connection
              Socket clientConnection = Establish_TCP_Connection();
 
+             //way to send and receive data
              DataOutputStream sendMessage = new DataOutputStream(clientConnection.getOutputStream());
-             DataInputStream recieveMessage = new DataInputStream(clientConnection.getInputStream());
+             DataInputStream receiveMessage = new DataInputStream(clientConnection.getInputStream());
 
 
              //next steps are calling nanotime, sending bytes to server, wait for the bytes to be returned
@@ -66,11 +56,17 @@ public class Client {
 
              //send message to server
              sendMessage.writeInt(signalBit);// writeByte(size);
+             sendMessage.flush();
 
              //receive message from server
-             System.out.println(recieveMessage.readUTF());
+             System.out.println(receiveMessage.readUTF());
 
              //send bytes
+
+             //***
+             // check and see if a long should be used instead if bytes, as a long is 8 bytes long and
+             // would be easier/make more sense to XOR real long values with another random long key value
+             // ***//
              byte[] bytesToSend = new byte[sizeByte];
              bytesToSend = giveBytesMeaning(bytesToSend);
 
@@ -83,19 +79,25 @@ public class Client {
              long startTime = System.nanoTime();
 
              //sleep for 1 second just for shits and gigs
-             Thread.sleep(1000);
+             //Thread.sleep(1000);
 
-             //write bytes to outputstream
+             //write bytes to output stream
              sendMessage.write(bytesToSend);
+             sendMessage.flush();
+
 
              //for some reason i cant get input back from the server, try to figure it out
 
-             //byte[] recievedByte = recieveMessage.readAllBytes();
 
-             //printBytes(recievedByte);
+
+
+             String test = receiveMessage.readUTF();
+             System.out.println(test);
+
 
 
              //calculates time taken
+             Thread.sleep(1000);
              long timeTaken = (System.nanoTime() - startTime);
              double seconds = timeTaken / 1_000_000_000.0;
 
@@ -103,6 +105,7 @@ public class Client {
 
 
          }
+
          //if UDP
          else{
              //call UDP functions
