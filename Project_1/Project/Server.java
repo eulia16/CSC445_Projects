@@ -42,10 +42,20 @@ public class Server {
                             //send confirmation message
                             sendMessage.writeUTF("We received your message, thank you.");
                             sendMessage.flush();
-                            String receivedBytes = receiveMessage.readUTF();  //readAllBytes();
-                            //for(byte i : recievedBytes){
-                            System.out.println(receivedBytes);
-                            //}
+
+                            //read in message from server
+                            int length = receiveMessage.readInt();
+                            byte[] message;
+                            if(length > 0){
+                                message = new byte[length];
+                                receiveMessage.readFully(message, 0, length);
+                            }
+                            else {
+                                message = new byte[1];
+                            }
+
+                            System.out.println(message.length);
+
 
 
                             //if(validatedBytes(receivedBytes)) {
