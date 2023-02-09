@@ -1,12 +1,11 @@
 import javax.xml.crypto.Data;
 import java.io.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 
 public class Server {
     final static int PORT = 25000;
 
-    public static void main(String[] argz){
+    public static void main(String[] argz) throws IOException {
         System.out.println("This is the server application, it will require one command line argument, whether "
                 + "to use TCP or UDP.");
         if(argz.length != 1 || (argz[0].compareToIgnoreCase("-TCP")) != 0 && (argz[0].compareToIgnoreCase("-UDP")) != 0){
@@ -43,7 +42,7 @@ public class Server {
                             sendMessage.writeUTF("We received your message, thank you.");
                             sendMessage.flush();
 
-                            //read in message from server
+                            //read in message from client
                             int length = receiveMessage.readInt();
                             byte[] message;
                             if(length > 0){
@@ -56,13 +55,31 @@ public class Server {
 
                             System.out.println(message.length);
 
+                            //decode the bytes before validating they all = 1
+                            decodeEncodeBytes(message);
 
+                            //validate message
+                            if(validatedBytes(message)) {
+                                //if the message is validated, send back the message
 
-                            //if(validatedBytes(receivedBytes)) {
-                            sendMessage.writeUTF("This is a test response");//write(recievedBytes);
-                            sendMessage.flush();
-                            System.out.println("Message bytes to client.");
-                            //}
+                                //re-encode before sending back to client
+                                decodeEncodeBytes(message);
+
+                                //sendMessage.writeUTF("Message has been verified");//write(recievedBytes);
+                                System.out.println("The message has been verified");
+                                //send the bytes back to the client
+                                sendMessage.writeInt(message.length);
+                                sendMessage.write(message);
+                                sendMessage.flush();
+
+                                System.out.println("Message bytes sent to client.");
+                            }
+                            else{
+                                sendMessage.writeUTF("Issue echoing message");
+                                serverSocket.close();
+
+                            }
+
                             break;
 
                         case 0:
@@ -85,6 +102,26 @@ public class Server {
         }
         //if user selects UDP
         else{
+            System.out.println("This is UDP");
+            DatagramSocket datagramSocket = new DatagramSocket();
+            int messageLength = 8;
+
+            while(true){
+                System.out.println("Waiting to recieve packets...");
+                byte[] size = new byte[messageLength];
+                DatagramPacket messageSize = new DatagramPacket(size, size.length);
+                datagramSocket.receive(messageSize);
+                System.out.println("packet received");
+
+
+
+
+
+            }
+
+
+
+
 
         }
 
@@ -93,7 +130,7 @@ public class Server {
     //checks to see if every but is 1, if there is a non 1 slot, something was corrupted
     public static boolean validatedBytes(byte[] message){
         for(int i =0; i<message.length; ++i ){
-            if(message[i] != 0)
+            if(message[i] != 1)
                 return false;
         }
 
@@ -103,10 +140,10 @@ public class Server {
     public static ServerSocket establishSocket() throws IOException{
         return new ServerSocket(PORT);
     }
-    public static byte[] decodeBytes(byte[] bytes){
+    public static byte[] decodeEncodeBytes(byte[] bytes){
         //XOR again to decode the message
         for(int i = 0; i< bytes.length; ++i){
-            bytes[i] = (byte) (bytes[i] ^ 1);
+            bytes[i] = (byte) (bytes[i] ^ 1L);
         }
         return bytes;
     }

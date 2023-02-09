@@ -1,6 +1,5 @@
 import java.io.*;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.sql.SQLOutput;
 import java.util.Scanner;
 
@@ -33,6 +32,10 @@ public class Client {
                     "(either TCP or TCP) and a valid measurement system(RTT or Throughput)");
         }
 
+        //get signal bit
+        int signalBit = getSignalBit();
+        int sizeByte = getByteSize();
+
         //if TCP
         if(argz[0].compareToIgnoreCase("-TCP") == 0){
             //call TCP functions
@@ -44,16 +47,6 @@ public class Client {
             DataOutputStream sendMessage = new DataOutputStream(clientConnection.getOutputStream());
             DataInputStream receiveMessage = new DataInputStream(clientConnection.getInputStream());
 
-
-            //next steps are calling nanotime, sending bytes to server, wait for the bytes to be returned
-            //(having the server 'echo' the bytes back(decode using XOR, validate message)),
-            //end nanotime, calculate total RTT it took, then emulate using UDP;
-
-            //get signal bit
-            int signalBit = getSignalBit();
-            int sizeByte = getByteSize();
-
-
             //send message to server
             sendMessage.writeInt(signalBit);// writeByte(size);
             sendMessage.flush();
@@ -61,17 +54,12 @@ public class Client {
             //receive message from server
             System.out.println(receiveMessage.readUTF());
 
-            //send bytes
 
-            //***
-            // check and see if a long should be used instead if bytes, as a long is 8 bytes long and
-            // would be easier/make more sense to XOR real long values with another random long key value
-            // ***//
             byte[] bytesToSend = new byte[sizeByte];
+
+            //make all bytes 1, just to give them all a value
             bytesToSend = giveBytesMeaning(bytesToSend);
 
-            //first we must encode the bytes
-            bytesToSend = XOR_Bytes(bytesToSend);
 
             //start timer right before sending data
 
@@ -81,35 +69,125 @@ public class Client {
             //sleep for 1 second just for shits and gigs
             //Thread.sleep(1000);
 
+            //first we must encode the bytes
+            bytesToSend = XOR_Bytes(bytesToSend);
+
             //write bytes to output stream
             sendMessage.writeInt(bytesToSend.length);
             sendMessage.write(bytesToSend);
             sendMessage.flush();
 
 
-            String test = receiveMessage.readUTF();
-            System.out.println(test);
+            //read in message back from server
+            byte[] message = readMessageFromServer(receiveMessage);
+
+            System.out.println(message.length);
+
+            //decode bytes
+            XOR_Bytes(message);
 
 
+            //validate they are accurate
+            if(validatedBytes(message)){
+                System.out.println("Bytes were validated, proceed with calculating RTT");
 
-            //calculates time taken
-            Thread.sleep(1000);
-            long timeTaken = (System.nanoTime() - startTime);
-            double seconds = timeTaken / 1_000_000_000.0;
+                //calculate RTT
+                calculateRTT(startTime);
 
-            System.out.println("RTT: " + seconds);
-
-            //we then can calculate the throughput after this...
-
+                //exit
+                System.exit(0);
+            }
+            else{
+                System.out.println("The bits were corrupted, message RTT unable to be computed.");
+                System.exit(0);
+            }
 
         }
 
         //if UDP
         else{
-            //call UDP functions
+            System.out.println("You are inside of UDP");
+            //make byte with size defined my user
+            byte[] message = new byte[sizeByte];
+            //give em meaning
+            message = giveBytesMeaning(message);
+
+            //create sockets
+            DatagramSocket datagramSocket = new DatagramSocket();
+            InetAddress address = InetAddress.getByName(HOST);
+
+
+            //start timer right before encoding
+            long startTime = System.nanoTime();
+
+            //encode bytes
+            message = XOR_Bytes(message);
+
+            //create packet
+            DatagramPacket packetToSend = new DatagramPacket(message, message.length, address, PORT);
+
+            //send message
+            datagramSocket.send(packetToSend);
+
+            //recieve message
+            packetToSend = new DatagramPacket(message, message.length);
+            datagramSocket.receive(packetToSend);
+
+            //get bytes from packet sent
+            message = packetToSend.getData();
+
+            //decode message
+            message = XOR_Bytes(message);
+
+            //validate message
+            if(validatedBytes(message)){
+                System.out.println("Bytes were validated, proceed with calculating RTT");
+                //calculate RTT
+                calculateRTT(startTime);
+                //exit
+                System.exit(0);
+
+            }
+            else{
+                System.out.println("The bits were corrupted, message RTT unable to be computed.");
+                System.exit(0);
+            }
+
         }
 
 
+    }
+
+    public static void calculateRTT(long startTime) throws InterruptedException {
+        //calculates time taken
+        Thread.sleep(1_000);
+        long timeTaken = (System.nanoTime() - startTime);
+        double seconds = timeTaken / 1_000_000_000.0;
+
+        System.out.println("RTT: " + seconds + " seconds.");
+
+    }
+
+    public static byte[] readMessageFromServer(DataInputStream receiveMessage) throws IOException {
+        int length = receiveMessage.readInt();
+        byte[] message;
+        if(length > 0){
+            message = new byte[length];
+            receiveMessage.readFully(message, 0, length);
+        }
+        else {
+            message = new byte[1];
+        }
+        return message;
+    }
+
+    public static boolean validatedBytes(byte[] message){
+        for(int i =0; i<message.length; ++i ){
+            if(message[i] != 1)
+                return false;
+        }
+
+        return true;
     }
 
     public static void printBytes(byte[] message){
@@ -153,7 +231,7 @@ public class Client {
         return x ^ 1L;
     }
 
-    //encryption method
+    //encryption and decrytion method
     public static byte[] XOR_Bytes(byte[] bytes){
         //xor every byte w/ 1
         for(int i=0; i<bytes.length; ++i){
