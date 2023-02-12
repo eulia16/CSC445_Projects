@@ -1,9 +1,9 @@
-import javax.xml.crypto.Data;
 import java.io.*;
 import java.net.*;
 
 public class Server {
-    final static int PORT = 25000;
+    //port selected by professor, get ports from 26970-26979
+    final static int PORT = 26970;
 
     public static void main(String[] argz) throws IOException {
         System.out.println("This is the server application, it will require one command line argument, whether "
@@ -63,7 +63,7 @@ public class Server {
                                 //if the message is validated, send back the message
 
                                 //re-encode before sending back to client
-                                decodeEncodeBytes(message);
+                                message = decodeEncodeBytes(message);
 
                                 //sendMessage.writeUTF("Message has been verified");//write(recievedBytes);
                                 System.out.println("The message has been verified");
@@ -103,15 +103,43 @@ public class Server {
         //if user selects UDP
         else{
             System.out.println("This is UDP");
-            DatagramSocket datagramSocket = new DatagramSocket();
-            int messageLength = 8;
+            DatagramSocket datagramSocket = new DatagramSocket(PORT);
+            int messageLength = 1024;
 
             while(true){
-                System.out.println("Waiting to recieve packets...");
+                System.out.println("Waiting to receive packets...");
+                //create packet to receive
                 byte[] size = new byte[messageLength];
                 DatagramPacket messageSize = new DatagramPacket(size, size.length);
+                //receive the message
                 datagramSocket.receive(messageSize);
-                System.out.println("packet received");
+                InetAddress clientAddress = messageSize.getAddress();
+                System.out.println("packet received from: " + clientAddress.getHostAddress());
+                //for testing purposes
+                System.out.println("Message was: " + messageSize.getLength() + " bytes.");
+
+                //we must then decode the message, validate it, encode it again, and thgen resend the packet back
+
+                byte[] decodedMessage = decodeEncodeBytes(messageSize.getData());
+
+                //validate message
+                if(validatedBytes(decodedMessage)) {
+                    //if the message is validated, send back the message
+
+                    //re-encode before sending back to client
+                    decodedMessage = decodeEncodeBytes(decodedMessage);
+
+                    //sendMessage.writeUTF("Message has been verified");//write(recievedBytes);
+                    System.out.println("The message has been verified");
+                    //send the bytes back to the client
+                    DatagramPacket packetToSend = new DatagramPacket(decodedMessage, decodedMessage.length, clientAddress, PORT);
+
+                    datagramSocket.send(packetToSend);
+
+                    System.out.println("Message sent to client.");
+                }
+
+
 
 
 
@@ -124,6 +152,16 @@ public class Server {
 
 
         }
+
+    }
+
+    public static boolean validatedBytes(byte[] message, int length){
+        for(int i =0; i<length; ++i ){
+            if(message[i] != 1)
+                return false;
+        }
+
+        return true;
 
     }
 

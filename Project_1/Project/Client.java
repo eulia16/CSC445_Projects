@@ -7,7 +7,7 @@ import java.util.Scanner;
 //this class will accept 2 commmand line arguments, one to define whether to use TCP or UDP, and the other to
 //determine whether you would like to measure the RTT(round trip time), or the latency
 public class Client {
-    static final int PORT = 25000;
+    static final int PORT = 26970;
     static String HOST = "pi.cs.oswego.edu";
 
 
@@ -113,8 +113,10 @@ public class Client {
             message = giveBytesMeaning(message);
 
             //create sockets
-            DatagramSocket datagramSocket = new DatagramSocket();
+            DatagramSocket datagramSocket = new DatagramSocket(PORT);
             InetAddress address = InetAddress.getByName(HOST);
+
+            System.out.println(address);
 
 
             //start timer right before encoding
@@ -125,32 +127,34 @@ public class Client {
 
             //create packet
             DatagramPacket packetToSend = new DatagramPacket(message, message.length, address, PORT);
+            System.out.println("Packet has been created");
+
 
             //send message
             datagramSocket.send(packetToSend);
+            System.out.println("Packet has been sent");
 
-            //recieve message
-            packetToSend = new DatagramPacket(message, message.length);
-            datagramSocket.receive(packetToSend);
+            //packet to recieve data
+            DatagramPacket packetToRecieve = new DatagramPacket(message, message.length);
+            message = packetToRecieve.getData();
 
-            //get bytes from packet sent
-            message = packetToSend.getData();
+            System.out.println("packet received from server");
 
             //decode message
             message = XOR_Bytes(message);
 
-            //validate message
             if(validatedBytes(message)){
-                System.out.println("Bytes were validated, proceed with calculating RTT");
+                System.out.println("Message was validated");
+
                 //calculate RTT
                 calculateRTT(startTime);
+
                 //exit
                 System.exit(0);
-
             }
             else{
-                System.out.println("The bits were corrupted, message RTT unable to be computed.");
-                System.exit(0);
+                System.out.println("Message was unable to be validated");
+
             }
 
         }
