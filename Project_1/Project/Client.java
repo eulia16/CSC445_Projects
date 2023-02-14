@@ -48,7 +48,7 @@ public class Client {
             DataInputStream receiveMessage = new DataInputStream(clientConnection.getInputStream());
 
             //send message to server
-            sendMessage.writeInt(signalBit);// writeByte(size);
+            sendMessage.writeInt(signalBit);
             sendMessage.flush();
 
             //receive message from server
