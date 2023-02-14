@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Server {
     //port selected by professor, get ports from 26970-26979
-    final static int PORT = 26970;
+    final static int PORT = 26971;
 
     public static void main(String[] argz) throws IOException {
         System.out.println("This is the server application, it will require one command line argument, whether "
@@ -36,6 +36,7 @@ public class Server {
 
                     switch(signalBit) {
                         case 1:
+
                             //confirm revieved bit
                             System.out.println("the signal bit was 1, continue to perform operations: " + signalBit);
                             //send confirmation message
@@ -138,11 +139,6 @@ public class Server {
 
                     System.out.println("Message sent to client.");
                 }
-
-
-
-
-
 
 
             }

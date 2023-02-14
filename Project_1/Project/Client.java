@@ -7,16 +7,16 @@ import java.util.Scanner;
 //this class will accept 2 commmand line arguments, one to define whether to use TCP or UDP, and the other to
 //determine whether you would like to measure the RTT(round trip time), or the latency
 public class Client {
-    static final int PORT = 26970;
+    static final int PORT = 26971;
     static String HOST = "pi.cs.oswego.edu";
 
 
     public static void main(String[] argz) throws IOException, UnknownHostException, InterruptedException{
 
-        Client(argz);
+        new Client(argz);
     }
 
-    public static void Client(String[] argz) throws IOException, InterruptedException {
+    public Client(String[] argz) throws IOException, InterruptedException {
         //ensure 2 command line arguments were passed into the program
 
         //error checking
@@ -91,7 +91,9 @@ public class Client {
             if(validatedBytes(message)){
                 System.out.println("Bytes were validated, proceed with calculating RTT");
 
+
                 //calculate RTT
+                //we can grab the RTT from here and then compile some graphs from that
                 calculateRTT(startTime);
 
                 //exit
@@ -162,13 +164,15 @@ public class Client {
 
     }
 
-    public static void calculateRTT(long startTime) throws InterruptedException {
+    public static double calculateRTT(long startTime) throws InterruptedException {
         //calculates time taken
         Thread.sleep(1_000);
         long timeTaken = (System.nanoTime() - startTime);
         double seconds = timeTaken / 1_000_000_000.0;
 
         System.out.println("RTT: " + seconds + " seconds.");
+
+        return seconds;
 
     }
 
