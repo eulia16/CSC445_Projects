@@ -14,3 +14,12 @@ the server will close all of its open sockets, streamreaders, etc.
 --left off changing the code to send one byte to the server before the actual message, 
 partially changed the client code but not the server yet, i had to stop and get a calzone
 before i make any more changes(1-2-23)
+
+
+we have chosen to send a single bit(1 or 0) to define whether the socket should close or not on the server side
+then after that bit it sent, move on from there
+
+
+we have finished the first two parts of the assignment, we now must calculate throughput by sending 1MB of data to a server
+and an 8 byte ACK back using (1024 1024Byte messages, vs 2048 512Byte messages, vs 8192 X 128Byte messages) as specified
+per Professor Lea

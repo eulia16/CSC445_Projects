@@ -23,3 +23,12 @@ then after that bit it sent, move on from there
 we have finished the first two parts of the assignment, we now must calculate throughput by sending 1MB of data to a server
 and an 8 byte ACK back using (1024 1024Byte messages, vs 2048 512Byte messages, vs 8192 X 128Byte messages) as specified
 per Professor Lea
+
+TransferTime = RTT + 1 / Bandwidth + TransferSize
+
+throughput = TransferSize / TransferTime
+
+we left off making sure the throughput calculation in the TCP section was accurate, i believe it is
+we now need to start/finish the UDP section and then create two scripts automating the graphs, more
+on that later, date: 2/14/23
+

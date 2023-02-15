@@ -7,7 +7,7 @@ import java.net.Socket;
 //this will serve as the class to perform all the calculations relating to the second part of project 1,
 //all pertaining to throughput
 class Throughput_Server {
-    private final static int PORT = 26971;
+    private final static int PORT = 26973;
 
     public static void main(String[] argz) throws IOException{
         new Throughput_Server(argz);
@@ -38,8 +38,9 @@ class Throughput_Server {
 
                 //send ACK
                 sendAcknowledgement(clientSocket);
+                System.out.println("Acknowledgment sent!");
 
-                serverSocket.close();
+                //serverSocket.close();
 
             }
 
@@ -53,14 +54,17 @@ class Throughput_Server {
 
     private void sendAcknowledgement(Socket clientSocket) throws IOException{
         DataOutputStream sendMessage = new DataOutputStream(clientSocket.getOutputStream());
-        byte[] ack = "ACK00001".getBytes();
-        sendMessage.write(ack);
+        String ack = "ACK00001";
+        sendMessage.writeInt(ack.length());
+        System.out.println("length: " + ack.length());
+        sendMessage.writeUTF("ACK00001");
         sendMessage.flush();
 
         //close output stream
-        sendMessage.close();
+        //sendMessage.close();
         //close socket, were done with them
-        clientSocket.close();
+
+        //clientSocket.close();
 
 
     }
@@ -76,7 +80,7 @@ class Throughput_Server {
             receive.readFully(message);
         }
         //close input stream
-        receive.close();
+        //receive.close();
         return message;
     }
 
