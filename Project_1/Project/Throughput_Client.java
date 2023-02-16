@@ -1,15 +1,21 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 //this class will handle the calculations and operations performed regarding the second half of
 //assignment 1, dealing with throughput and its calculations
 public class Throughput_Client {
 
-    private final int PORT = 26973;
+    private final int PORT = 26974;
     private final String HOST = "pi.cs.oswego.edu";
+
+    private final int ACK_SIZE = 8;
 
 //    private final int ACK_SIZE = 8;
 
@@ -65,14 +71,74 @@ public class Throughput_Client {
         }
         //else UDP
         else{
+            //create a packet size based on the input of the number of messages to be sent
+            byte[] packet_bytes = new byte[determinePacketSize(numMessages)];
+            //ACK size for receiving message
+            byte[] receive_Bytes = new byte[ACK_SIZE];
+            DatagramSocket clientSocket = new DatagramSocket(PORT);
+            //get InetAddress
+            InetAddress address = InetAddress.getByName(HOST);
+            packet_bytes = giveBytesMeaning(packet_bytes);
+
+
+            //create datagram packet
+            DatagramPacket packetToSend = new DatagramPacket(packet_bytes, packet_bytes.length, address, PORT);
+            System.out.println("Datagram packet to send has been created");
+            DatagramPacket packetToReceive = new DatagramPacket(receive_Bytes, receive_Bytes.length);
+
+            //sending packet to let server know the size of packets
+            clientSocket.send(packetToSend);
+            System.out.println("Packet Sent!");
+
+            long startTime = System.nanoTime();
+
+            //receive before sending
+            clientSocket.receive(packetToReceive);
+            System.out.println("packet received: " + new String(packetToReceive.getData(), StandardCharsets.UTF_8));
+
+
+            numMessages = 93;
+            for(int i = 0; i< numMessages; ++i ){
+                //send packet
+                clientSocket.send(packetToSend);
+
+                    //receive ACK
+                //we may not need to send an ACK back after every packet, check for later but if we only need to send
+                //one ACK, this will be WAY quicker
+
+                //clientSocket.receive(packetToReceive);
+
+                //System.out.println("packet ACK: " + new String(packetToReceive.getData(), StandardCharsets.UTF_8));
+
+            }
+            //System.out.println("end loop");
+
+
+            clientSocket.receive(packetToReceive);
+            System.out.println("cool stuff happened, heres the ACK : " +new String(packetToReceive.getData(), StandardCharsets.UTF_8));
+
+
+            //System.out.println("received ACK: " + new String(packetToReceive.getData(), StandardCharsets.UTF_8));
+
+
+            double RTT = calculateRTT(startTime);
+            double Throughput = calculateThroughput(RTT);
+
+            System.out.println("The whole message was sent to the Server");
+
+
 
         }
 
 
     }
 
+    //will validate
+
+
     private double calculateThroughput(double RTT){
         //the total packet size being sent was 1MB, or 1024 * 1024 bytes, 1_048_576 bytes
+        //useful in reading the number of 1 _B per second
         double kilobytes = .001;
         double megabytes = .001 * kilobytes;
         //this returns bytes per second that are transmitted
@@ -145,7 +211,7 @@ public class Throughput_Client {
         return true;
     }
 
-    private static byte[] giveBytesMeaning(byte[] message){
+    private  byte[] giveBytesMeaning(byte[] message){
         for(int i=0; i < message.length; ++i){
             message[i] = 1;
         }

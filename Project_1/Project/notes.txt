@@ -32,3 +32,8 @@ we left off making sure the throughput calculation in the TCP section was accura
 we now need to start/finish the UDP section and then create two scripts automating the graphs, more
 on that later, date: 2/14/23
 
+thoughts on how to capture a large amount of data through a script for the overall RTT and Throughput for each problem:
+have the server file running on a server(pi, rho, etc) and call the function that runs over all the code, and then
+create a function inside of each .java file that would just capture the data we want(RTT or Throughout) and return that.
+Then the script I have running will pipe that info to a file in a CSV format and then we can do with that as we please
+(i.e. use graph.js for webpage etc.).
