@@ -6,28 +6,34 @@ import java.util.Scanner;
 
 //this class will accept 2 commmand line arguments, one to define whether to use TCP or UDP, and the other to
 //determine whether you would like to measure the RTT(round trip time), or the latency
-public class Client {
-    static final int PORT = 26979;
+public class RTT_Client {
+    static int PORT = 26971;
     static String HOST = "pi.cs.oswego.edu";
 
 
     public static void main(String[] argz) throws IOException, UnknownHostException, InterruptedException{
 
-        new Client(argz);
+        new RTT_Client(argz);
     }
 
-    public Client(String[] argz) throws IOException, InterruptedException {
+    public RTT_Client(String[] argz) throws IOException, InterruptedException {
         //ensure 2 command line arguments were passed into the program
 
         //error checking
         if(argz.length != 1 && argz.length != 3){
-            System.out.println("You need to enter the data connection model and where to connect to");
+            System.out.println("You need to enter the data connection model and the host and port.");
             System.exit(0);
         }
-        System.out.println("arg1: " + argz[0] + ", arg2: " + argz[1] +", arg3: " + argz[2]);
+        System.out.println("arg1: " + argz[0] + ", arg2: " + argz[1] + ", arg2: " + argz[2]);
 
         if( ((argz[0].compareToIgnoreCase("-TCP") != 0)) && ((argz[0].compareToIgnoreCase("-UDP") != 0))){
-            System.out.println("You must enter a valid protocol" );
+            System.out.println("You must enter a valid protocol");
+
+        }
+        //if the user gave a host and port number, we will change them, default ones are listed above
+        if(argz.length == 3){
+            setHost(argz[1]);
+            setPORT(Integer.parseInt(argz[2]));
         }
 
         //get signal bit
@@ -162,6 +168,15 @@ public class Client {
 
     }
 
+    //methods to allow connection to remote servers easier
+    public void setHost(String hostName){
+        HOST = hostName;
+    }
+
+    //methods to allow connection to remote servers easier
+    public void setPORT(int port){
+        PORT = port;
+    }
     public static double calculateRTT(long startTime) throws InterruptedException {
         //calculates time taken
         Thread.sleep(1_000);
