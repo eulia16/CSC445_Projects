@@ -12,18 +12,16 @@ import java.util.Scanner;
 //assignment 1, dealing with throughput and its calculations
 public class Throughput_Client {
 
-    private final int PORT = 26974;
-    private final String HOST = "pi.cs.oswego.edu";
+    private  int PORT = 26975;
+    private  String HOST = "moxie.cs.oswego.edu";
 
     private final int ACK_SIZE = 8;
 
-//    private final int ACK_SIZE = 8;
-
-    public static void main(String[] argz) throws IOException{
+    public static void main(String[] argz) throws IOException, InterruptedException {
         new Throughput_Client(argz);
     }
 
-    public Throughput_Client(String[] argz) throws IOException {
+    public Throughput_Client(String[] argz) throws IOException, InterruptedException {
         //simple error checking
         if (argz.length < 1) {
             System.out.println("You need to enter either TCP to UDP as a protocol");
@@ -33,10 +31,12 @@ public class Throughput_Client {
             System.out.println("You must enter a correct Protocol");
             System.exit(0);
         }
+        //if the user entered an alternative port and hostname, use them
+        if(argz.length == 3){
+            setHost(argz[1]);
+            setPORT(Integer.parseInt(argz[2]));
+        }
 
-        //we can grab some user input that is consistent between both UDP and TCP such as
-        //the number of messages they want to send to the server(and then we can calculate
-        //the subsequent packet sizes(doesn't apply to TCP in regard to packet sizes))
         int numMessages = getMessageSize();
 
 
@@ -48,102 +48,95 @@ public class Throughput_Client {
             //begin timer
             long startTime = startTimeTracking();
 
+            //write message indicating the size of the messages
+
             sendMessages(numMessages, clientSocket);
             System.out.println("message was sent!");
 
-            boolean response = receiveACK(clientSocket);
-            //if the response is false, there was either no ACK or something else went wrong
-            if(response){
-                //end time
-                double RTT = calculateRTT(startTime);
-                calculateThroughput(RTT);
-                System.out.println("Successfully transmitted the 1MB of data and received an ACK, way to go");
-                clientSocket.close();
-            }
-            else{
-                //end time
-                double RTT =calculateRTT(startTime);
-                calculateThroughput(RTT);
-                System.out.println("Something went dreadfully wrong, better luck next time");
-                clientSocket.close();
-            }
+
+            //end time
+            double RTT = calculateRTT(startTime);
+            calculateThroughput(RTT);
+            System.out.println("Successfully transmitted the 1MB of data and received an ACK, way to go");
+            clientSocket.close();
+
 
         }
-        //else UDP
         else{
-            //create a packet size based on the input of the number of messages to be sent
-            byte[] packet_bytes = new byte[determinePacketSize(numMessages)];
-            //ACK size for receiving message
-            byte[] receive_Bytes = new byte[ACK_SIZE];
             DatagramSocket clientSocket = new DatagramSocket(PORT);
+
+            int messageSize = determinePacketSize(numMessages);
+            int numberOfMessages = numMessages;
+
+            byte[] packet_bytes = new byte[determinePacketSize(numMessages)];
+
             //get InetAddress
             InetAddress address = InetAddress.getByName(HOST);
-            packet_bytes = giveBytesMeaning(packet_bytes);
 
+            //send length of messages
+            DatagramPacket sendServerPacketLength = new DatagramPacket(packet_bytes, packet_bytes.length, address, PORT);
+            clientSocket.send(sendServerPacketLength);
 
-            //create datagram packet
-            DatagramPacket packetToSend = new DatagramPacket(packet_bytes, packet_bytes.length, address, PORT);
-            System.out.println("Datagram packet to send has been created");
-            DatagramPacket packetToReceive = new DatagramPacket(receive_Bytes, receive_Bytes.length);
+            //packet to send
+            byte[] bytes = new byte[messageSize];
+            //encode bytes
+            bytes = XOR_Bytes(bytes);
 
-            //sending packet to let server know the size of packets
-            clientSocket.send(packetToSend);
-            System.out.println("Packet Sent!");
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length, address, PORT);
 
+            //ack
+            byte[] ackByte = new byte[1];
+
+            DatagramPacket ack = new DatagramPacket(ackByte, ackByte.length);
+
+            //start timer
             long startTime = System.nanoTime();
 
-            //receive before sending
-            clientSocket.receive(packetToReceive);
-            System.out.println("packet received: " + new String(packetToReceive.getData(), StandardCharsets.UTF_8));
 
+            for (int j = 0; j < numberOfMessages; ++j) {
+                clientSocket.send(packet);
 
-            numMessages = 93;
-            for(int i = 0; i< numMessages; ++i ){
-                //send packet
-                clientSocket.send(packetToSend);
+                clientSocket.receive(ack);
 
-                    //receive ACK
-                //we may not need to send an ACK back after every packet, check for later but if we only need to send
-                //one ACK, this will be WAY quicker
-
-                //clientSocket.receive(packetToReceive);
-
-                //System.out.println("packet ACK: " + new String(packetToReceive.getData(), StandardCharsets.UTF_8));
+                //validate
+                if(!validatedBytes(XOR_Bytes(ack.getData()))){
+                    System.out.println("Invalid bits, exiting now");
+                    System.exit(0);
+                }
 
             }
-            //System.out.println("end loop");
 
 
-            clientSocket.receive(packetToReceive);
-            System.out.println("cool stuff happened, heres the ACK : " +new String(packetToReceive.getData(), StandardCharsets.UTF_8));
-
-
-            //System.out.println("received ACK: " + new String(packetToReceive.getData(), StandardCharsets.UTF_8));
-
+            clientSocket.receive(ack);
 
             double RTT = calculateRTT(startTime);
-            double Throughput = calculateThroughput(RTT);
+            calculateThroughput(RTT);
 
-            System.out.println("The whole message was sent to the Server");
+       }
 
+   }
 
-
-        }
-
-
+    //methods to allow connection to remote servers easier
+    public void setHost(String hostName){
+        HOST = hostName;
     }
 
-    //will validate
+    //methods to allow connection to remote servers easier
+    public void setPORT(int port){
+        PORT = port;
+    }
 
 
     private double calculateThroughput(double RTT){
         //the total packet size being sent was 1MB, or 1024 * 1024 bytes, 1_048_576 bytes
         //useful in reading the number of 1 _B per second
-        double kilobytes = .001;
-        double megabytes = .001 * kilobytes;
+
+        //if bits wanted
+        int bit = 8;
+
         //this returns bytes per second that are transmitted
-        double throughout = 1_048_576 * kilobytes / RTT ;
-        System.out.println("Throughput: " + throughout + " KiloBytes per second");
+        double throughout = (1024 * 1024 * bit)  / RTT;
+        System.out.println("Throughput: " + throughout + " bits per second");
         return throughout;
 
 
@@ -151,12 +144,21 @@ public class Throughput_Client {
 
     private double calculateRTT(long startTime){
         long timeTaken = (System.nanoTime() - startTime);
-        double seconds = timeTaken / 1_000_000_000.0;
+        double seconds = timeTaken / 1E9;
 
-        System.out.println("RTT: " + seconds + " seconds.");
 
         return seconds;
     }
+
+    //encode
+    private static byte[] XOR_Bytes(byte[] bytes){
+        //xor every byte w/ 1
+        for(int i=0; i<bytes.length; ++i){
+            bytes[i] = (byte) (bytes[i] ^ 1l);
+        }
+        return bytes;
+    }
+
 
 
     private long startTimeTracking(){
@@ -185,11 +187,11 @@ public class Throughput_Client {
 
     private boolean receiveACK(Socket clientSocket) throws IOException{
         System.out.println("We are in the receiving ACK now");
-        byte[] message;
+
         DataInputStream receive = new DataInputStream(clientSocket.getInputStream());
 
         int lengthOfMessage = receive.readInt();
-        message = new byte[lengthOfMessage];
+
         System.out.println("This is the value of the return value: " + lengthOfMessage );
         String ack = "";
         if(lengthOfMessage > 0){
@@ -204,23 +206,18 @@ public class Throughput_Client {
 
 
         //validate the ACK matches what we set it as
-        return true;//acknowledgeACK(message);
+        return true;
     }
 
     private boolean acknowledgeACK(byte[] message){
         return true;
     }
 
-    private  byte[] giveBytesMeaning(byte[] message){
-        for(int i=0; i < message.length; ++i){
-            message[i] = 1;
-        }
-        return message;
-    }
+
 
     public static boolean validatedBytes(byte[] message){
         for(int i =0; i<message.length; ++i ){
-            if(message[i] != 1)
+            if(message[i] != 0)
                 return false;
         }
 
@@ -230,21 +227,41 @@ public class Throughput_Client {
 
     private void sendMessages(int numMessages, Socket clientSocket) throws IOException{
         //get the size of the data to send(for TCP it doesn't matter)
-        int sizeOfData = numMessages * determinePacketSize(numMessages);
+
         //create bytes to send
-        byte[] bytesToSend = new byte[sizeOfData];
-        //get size of packet as a result of the number of messages you have chosen to send
-        int number = determinePacketSize(numMessages);
-        System.out.println("Number from bytes to send: " + number + ", numMessages value:" + numMessages);
-        bytesToSend = giveBytesMeaning(bytesToSend);
+        byte[] bytesToSend = new byte[determinePacketSize(numMessages)];
+        //bytes to receive
+        byte[] bytesToReceive = new byte[1];
+
         //open stream
         DataOutputStream sendMessages = new DataOutputStream(clientSocket.getOutputStream());
+        DataInputStream receiveMessages = new DataInputStream(clientSocket.getInputStream());
         //write size of data incoming
-        sendMessages.writeInt(sizeOfData);
-        //write 1MB data
-        //***See if this is a correct way to send data over TCP***//
-        sendMessages.write(bytesToSend);
+        sendMessages.writeInt(bytesToSend.length);
         sendMessages.flush();
+
+        //send packets and wait for acks
+        for(int i = 0; i < numMessages; ++i){
+            //encrypt message
+            bytesToReceive = XOR_Bytes(bytesToSend);
+            //send message
+            sendMessages.write(bytesToSend);
+            sendMessages.flush();
+            //read encrypted 8 byte ACK
+            receiveMessages.read(bytesToReceive);
+            //decrypt message
+            bytesToReceive = XOR_Bytes(bytesToSend);
+            //validate decrypted message
+            if(!validatedBytes(bytesToReceive)){
+                System.out.println("Bytes invalid, exiting.");
+                System.exit(0);
+            }
+
+
+        }
+        //receive one last ACK from server
+        receiveMessages.read(bytesToReceive);
+
 
     }
 
@@ -253,15 +270,5 @@ public class Throughput_Client {
         System.out.println("Please enter the size of the messages you would like to send(options: 1024, 2048, 8192)");
         return kbd.nextInt();
     }
-
-
-//    private double TransferTimeCalculation(int RTT, int bandwidth, int transferSize){
-//    //formula: TransferTime = RTT + 1 / Bandwidth * TransferSize
-//        return RTT + 1 / bandwidth * transferSize;
-//
-//
-//    }
-
-
 
 }

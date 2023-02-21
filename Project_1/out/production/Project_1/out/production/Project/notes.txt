@@ -1,0 +1,25 @@
+we are using (for the client) a DataOutputStream object in which we will define the following policy 
+
+the client will send an initial singal byte in confirmation of whether they want to keep the connection,
+or end it
+-keeping a connection will head a packet with a 1  being sent 
+-to end a connection and tell the server the client no longer wants to talk, a -1 will be send
+
+the server will listen constantly and inside of its 'forever' loop, it will contain a case statement
+this statement will parse the initla byte that is sent and act accordingly, obviously in the case of a
+1 being received, the server will then expect another message to be sent, and will then promptly decode it, 
+print it out on its side, and then echo the message encoded again back to the client. if a -1 is received,
+the server will close all of its open sockets, streamreaders, etc.
+
+--left off changing the code to send one byte to the server before the actual message, 
+partially changed the client code but not the server yet, i had to stop and get a calzone
+before i make any more changes(1-2-23)
+
+
+we have chosen to send a single bit(1 or 0) to define whether the socket should close or not on the server side
+then after that bit it sent, move on from there
+
+
+we have finished the first two parts of the assignment, we now must calculate throughput by sending 1MB of data to a server
+and an 8 byte ACK back using (1024 1024Byte messages, vs 2048 512Byte messages, vs 8192 X 128Byte messages) as specified
+per Professor Lea

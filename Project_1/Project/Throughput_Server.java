@@ -3,11 +3,13 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 //this will serve as the class to perform all the calculations relating to the second part of project 1,
 //all pertaining to throughput
 class Throughput_Server {
-    private final static int PORT = 26974;
+    private final static int PORT = 26975;
 
     public static void main(String[] argz) throws IOException{
         new Throughput_Server(argz);
@@ -31,73 +33,82 @@ class Throughput_Server {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("Client Connected!");
 
-                //allow input and output(request/answer)
-                byte[] messageReceived = readInBytes(clientSocket);
+                //read all bytes from socket
+                int i = readBytesCorrectly(clientSocket);
 
-                System.out.println("Message was received from client, the length is: " + messageReceived.length);
-
+                System.out.println("Full message has been received from client");
                 //send ACK
-                sendAcknowledgement(clientSocket);
-                System.out.println("Acknowledgment sent!");
-
-                //serverSocket.close();
+                //sendAcknowledgement(clientSocket);
 
             }
 
+
         }
-        //if UDP
-        else {
-            int tempPacketSize = 1024;
-            //we know we are receiving a 1MB packet, so we wi;;
+
+
+        else{
+
+            byte[] buffer = new byte[1024];
             DatagramSocket datagramSocket = new DatagramSocket(PORT);
-            while(true) {
-                byte[] overallPacketSizes = new byte[tempPacketSize];
-                System.out.println("Waiting to receive message...");
-                //create packet to receive the length of the packets that we will be receiving
-                DatagramPacket determineSize = new DatagramPacket(overallPacketSizes, overallPacketSizes.length);
-                datagramSocket.receive(determineSize);
-                System.out.println("Message Received!");
-                int lengthOfMessage = determineSize.getLength();
-                //System.out.println("Message length is: " + lengthOfMessage);
-                //get address of where packet came from
-                InetAddress clientAddress = determineSize.getAddress();
-                //datagramSocket.connect(clientAddress, PORT);
-
-                byte[] messageSize = new byte[1024 * 1024];//[lengthOfMessage];
-                DatagramPacket packetToReceive = new DatagramPacket(messageSize, messageSize.length);
-
-                //creating ACK packet
-                String ACKConfirmation = new String("ACK");
-
-                byte[] bytes = ACKConfirmation.getBytes();
-                DatagramPacket temp = new DatagramPacket(bytes, bytes.length, clientAddress, PORT);
-                datagramSocket.send(temp);
-                //System.out.println("Bytes received");
+            DatagramPacket packetToReceive = new DatagramPacket(buffer, buffer.length);
+            datagramSocket.receive(packetToReceive);
 
 
-                //we will receive a message telling us how long each packet will be from the client
-                System.out.println("number of packets: " + getNumberOfPackets(lengthOfMessage));
-                //for (int i = 0; i < 93; ++i){//getNumberOfPackets(lengthOfMessage); ++i) {
-                //datagramSocket.
 
-                datagramSocket.receive(packetToReceive);
-                System.out.println("Message Received! ");
-                //ACKConfirmation = ACKConfirmation.substring(0,3) + i;
-                //System.out.println("Creating ACK packet to send...");
-                //DatagramPacket packetToSend = new DatagramPacket(ACKConfirmation.getBytes(), ACKConfirmation.length(),
-                //clientAddress, PORT);
-                //datagramSocket.send(temp);
-                //System.out.println("ACK sent!");
-                //}
-                datagramSocket.send(temp);
-                System.out.println("The whole message was received");
+            int messageSize = packetToReceive.getLength();
+            int numberOfMessages = getNumberOfPackets(messageSize);
+            //byte[] bytes = new byte[1048576];
+            byte[] receivedBytes = new byte[messageSize];
+            byte[] ackByte = new byte[1];
+
+
+
+            //encode ACK
+            ackByte = XOR_Bytes(ackByte);
+
+            DatagramPacket receivedPacket = new DatagramPacket(receivedBytes, messageSize);
+            DatagramPacket ack = new DatagramPacket(ackByte, ackByte.length, packetToReceive.getAddress(), packetToReceive.getPort());
+
+            for (int i = 0; i < numberOfMessages; ++i) {
+
+
+                datagramSocket.receive(receivedPacket);
+
+                //validate
+                if(!validatedBytes(XOR_Bytes(receivedPacket.getData()))){
+                    System.out.println("Bytes corrupted");
+                    System.exit(0);
+                }
+
+                datagramSocket.send(ack);
 
             }
-
-
+            //DatagramPacket ack = new DatagramPacket(ackByte, ackByte.length, address, sendToPort);
+            datagramSocket.send(ack);
 
         }
 
+
+    }
+
+    //validate bytes
+    public static boolean validatedBytes(byte[] message){
+        for(int i =0; i<message.length; ++i ){
+            if(message[i] != 0)
+                return false;
+        }
+
+        return true;
+    }
+
+
+    //decode
+    private static byte[] XOR_Bytes(byte[] bytes){
+        //xor every byte w/ 1
+        for(int i=0; i<bytes.length; ++i){
+            bytes[i] = (byte) (bytes[i] ^ 1l);
+        }
+        return bytes;
     }
 
     private int getNumberOfPackets(int numMessages){
@@ -119,21 +130,19 @@ class Throughput_Server {
         }
     }
 
-    private void sendAcknowledgement(Socket clientSocket) throws IOException{
+    private void sendAcknowledgement(Socket clientSocket) throws IOException {
         DataOutputStream sendMessage = new DataOutputStream(clientSocket.getOutputStream());
         String ack = "ACK00001";
         sendMessage.writeInt(ack.length());
         System.out.println("length: " + ack.length());
         sendMessage.writeUTF("ACK00001");
         sendMessage.flush();
+    }
 
-        //close output stream
-        //sendMessage.close();
-        //close socket, were done with them
-
-        //clientSocket.close();
-
-
+    public static void printBytes(byte[] message){
+        for(int i=0; i < 20; ++i){
+            System.out.println(message[i]);
+        }
     }
 
     //get message from stream
@@ -143,6 +152,7 @@ class Throughput_Server {
 
         int lengthOfMessage = receive.readInt();
         message = new byte[lengthOfMessage];
+
         if(lengthOfMessage > 0){
             receive.readFully(message);
         }
@@ -151,7 +161,43 @@ class Throughput_Server {
         return message;
     }
 
+    private int readBytesCorrectly(Socket clientSocket) throws IOException{
+        DataInputStream receiveMessages = new DataInputStream(clientSocket.getInputStream());
+        DataOutputStream sendMessages = new DataOutputStream(clientSocket.getOutputStream());
+        byte[] buffer;
+
+        int packetSize  = receiveMessages.readInt();
+        System.out.println("PacketSize: " + packetSize);
+        int numMessages = getNumberOfPackets(packetSize);
+        buffer = new byte[packetSize];
+
+        byte[] messageToSend = new byte[1];
+        //encode
+        messageToSend = XOR_Bytes(messageToSend);
+
+        System.out.println("About to receive data");
+        //until a packet that has an ending signal in it
+        for(int i=0; i<numMessages; ++i){
+            //read in encrypted message
+            receiveMessages.read(buffer);
+
+            if(!validatedBytes(XOR_Bytes(buffer))){
+                System.out.println("Bytes corrupted");
+                System.exit(0);
+            }
+
+            //write encoded ACK
+            sendMessages.write(messageToSend);
+            sendMessages.flush();
+
+        }
+        sendMessages.write(messageToSend);
+
+        return 1;
+    }
+
 
 
 
 }
+

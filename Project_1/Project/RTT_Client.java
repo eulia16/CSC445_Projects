@@ -8,7 +8,7 @@ import java.util.Scanner;
 //determine whether you would like to measure the RTT(round trip time), or the latency
 public class RTT_Client {
     static int PORT = 26971;
-    static String HOST = "pi.cs.oswego.edu";
+    static String HOST = "moxie.cs.oswego.edu";
 
 
     public static void main(String[] argz) throws IOException, UnknownHostException, InterruptedException{
@@ -17,14 +17,13 @@ public class RTT_Client {
     }
 
     public RTT_Client(String[] argz) throws IOException, InterruptedException {
-        //ensure 2 command line arguments were passed into the program
 
         //error checking
         if(argz.length != 1 && argz.length != 3){
             System.out.println("You need to enter the data connection model and the host and port.");
             System.exit(0);
         }
-        System.out.println("arg1: " + argz[0] + ", arg2: " + argz[1] + ", arg2: " + argz[2]);
+        //System.out.println("arg1: " + argz[0] + ", arg2: " + argz[1] + ", arg2: " + argz[2]);
 
         if( ((argz[0].compareToIgnoreCase("-TCP") != 0)) && ((argz[0].compareToIgnoreCase("-UDP") != 0))){
             System.out.println("You must enter a valid protocol");
@@ -62,7 +61,7 @@ public class RTT_Client {
             byte[] bytesToSend = new byte[sizeByte];
 
             //make all bytes 1, just to give them all a value
-            bytesToSend = giveBytesMeaning(bytesToSend);
+            //bytesToSend = giveBytesMeaning(bytesToSend);
 
 
             //start timer right before sending data
@@ -81,15 +80,12 @@ public class RTT_Client {
             sendMessage.write(bytesToSend);
             sendMessage.flush();
 
-
             //read in message back from server
             byte[] message = readMessageFromServer(receiveMessage);
 
-            System.out.println(message.length);
 
             //decode bytes
-            XOR_Bytes(message);
-
+            message = XOR_Bytes(message);
 
             //validate they are accurate
             if(validatedBytes(message)){
@@ -116,13 +112,15 @@ public class RTT_Client {
             //make byte with size defined my user
             byte[] message = new byte[sizeByte];
             //give em meaning
-            message = giveBytesMeaning(message);
+            //message = giveBytesMeaning(message);
 
             //create sockets
             DatagramSocket datagramSocket = new DatagramSocket(PORT);
             InetAddress address = InetAddress.getByName(HOST);
 
             System.out.println(address);
+
+
 
 
             //start timer right before encoding
@@ -134,7 +132,6 @@ public class RTT_Client {
             //create packet
             DatagramPacket packetToSend = new DatagramPacket(message, message.length, address, PORT);
             System.out.println("Packet has been created");
-
 
             //send message
             datagramSocket.send(packetToSend);
@@ -179,7 +176,7 @@ public class RTT_Client {
     }
     public static double calculateRTT(long startTime) throws InterruptedException {
         //calculates time taken
-        Thread.sleep(1_000);
+        //Thread.sleep(1_000);
         long timeTaken = (System.nanoTime() - startTime);
         double seconds = timeTaken / 1_000_000_000.0;
 
@@ -204,7 +201,7 @@ public class RTT_Client {
 
     public static boolean validatedBytes(byte[] message){
         for(int i =0; i<message.length; ++i ){
-            if(message[i] != 1)
+            if(message[i] != 0)
                 return false;
         }
 

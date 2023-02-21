@@ -1,6 +1,9 @@
 import java.io.*;
 import java.net.*;
 
+public class RTT_Server import java.io.*;
+        import java.net.*;
+
 public class RTT_Server {
     //port selected by professor, get ports from 26970-26979
     final static int PORT = 26971;
@@ -13,17 +16,14 @@ public class RTT_Server {
     public RTT_Server(String[] argz) throws IOException {
         System.out.println("This is the server application, it will require one command line argument, whether "
                 + "to use TCP or UDP.");
-        if(argz.length != 1 || (argz[0].compareToIgnoreCase("-TCP")) != 0 && (argz[0].compareToIgnoreCase("-UDP")) != 0){
+        if((argz[0].compareToIgnoreCase("-TCP")) != 0 && (argz[0].compareToIgnoreCase("-UDP")) != 0){
             System.out.println("You must enter whether the server will support TCP or UDP");
             System.exit(0);
         }
 
-        System.out.println(argz[0]);
-
         //if user selects TCP
         if(argz[0].compareToIgnoreCase("-TCP") == 0){
             try {
-                byte[] buffer = new byte[8];
                 //attempt to bind a socket to a port
                 ServerSocket serverSocket = establishSocket();
                 //continuously wait for connection to be established
@@ -37,12 +37,12 @@ public class RTT_Server {
 
 
                     //read all bytes sent from the client
-                    int signalBit = receiveMessage.readInt();//readByte();
+                    int signalBit = receiveMessage.readInt();
 
                     switch(signalBit) {
                         case 1:
 
-                            //confirm revieved bit
+                            //confirm recieved bit
                             System.out.println("the signal bit was 1, continue to perform operations: " + signalBit);
                             //send confirmation message
                             sendMessage.writeUTF("We received your message, thank you.");
@@ -63,8 +63,8 @@ public class RTT_Server {
 
                             System.out.println(message.length);
 
-                            //decode the bytes before validating they all = 1
-                            decodeEncodeBytes(message);
+                            //decode
+                            message = decodeEncodeBytes(message);
 
                             //validate message
                             if(validatedBytes(message)) {
@@ -123,8 +123,6 @@ public class RTT_Server {
                 datagramSocket.receive(messageSize);
                 InetAddress clientAddress = messageSize.getAddress();
                 System.out.println("packet received from: " + clientAddress.getHostAddress());
-                //for testing purposes
-                System.out.println("Message was: " + messageSize.getLength() + " bytes.");
 
                 //we must then decode the message, validate it, encode it again, and thgen resend the packet back
 
@@ -171,7 +169,7 @@ public class RTT_Server {
     //checks to see if every but is 1, if there is a non 1 slot, something was corrupted
     public static boolean validatedBytes(byte[] message){
         for(int i =0; i<message.length; ++i ){
-            if(message[i] != 1)
+            if(message[i] != 0)
                 return false;
         }
 
